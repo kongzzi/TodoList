@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>할 일 목록</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1f2937;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #todoInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #todoInput:focus {
+            border-color: #a855f7;
+        }
+
+        .add-btn {
+            background: #a855f7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-btn:hover {
+            background: #9333ea;
+        }
+
+        .todo-list {
+            margin-bottom: 20px;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+
+        .todo-item:hover {
+            background: #f3f4f6;
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #a855f7;
+        }
+
+        .todo-text {
+            flex: 1;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            padding: 4px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #dc2626;
+            transform: scale(1.25);
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .modal-text {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .cancel-btn {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .cancel-btn:hover {
+            background: #d1d5db;
+        }
+
+        .confirm-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: #dc2626;
+        }
+
+        .trash-icon {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>할 일 목록</h1>
+            
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="todoInput" 
+                    placeholder="할 일을 입력하세요"
+                    autocomplete="off"
+                >
+                <button class="add-btn" onclick="addTodo()">
+                    <span>+</span>
+                    추가
+                </button>
+            </div>
+
+            <div class="todo-list" id="todoList"></div>
+
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3 class="modal-title">삭제 확인</h3>
+            <p class="modal-text">정말 삭제하시겠습니까?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" onclick="cancelDelete()">취소</button>
+                <button class="modal-btn confirm-btn" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let todos = [];
+        let deleteTargetId = null;
+
+        // 페이지 로드 시 localStorage에서 데이터 불러오기
+        function loadTodos() {
+            const savedTodos = localStorage.getItem('todos');
+            if (savedTodos) {
+                todos = JSON.parse(savedTodos);
+            }
+            renderTodos();
+        }
+
+        // localStorage에 저장
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        // 할 일 추가
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                const todo = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false
+                };
+                todos.push(todo);
+                saveTodos();
+                renderTodos();
+                input.value = '';
+            }
+        }
+
+        // 완료 상태 토글
+        function toggleTodo(id) {
+            todos = todos.map(todo => 
+                todo.id === id ? { ...todo, completed: !todo.completed } : todo
+            );
+            saveTodos();
+            renderTodos();
+        }
+
+        // 삭제 확인 모달 열기
+        function showDeleteModal(id) {
+            deleteTargetId = id;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // 삭제 취소
+        function cancelDelete() {
+            deleteTargetId = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        // 삭제 확인
+        function confirmDelete() {
+            if (deleteTargetId !== null) {
+                todos = todos.filter(todo => todo.id !== deleteTargetId);
+                saveTodos();
+                renderTodos();
+            }
+            cancelDelete();
+        }
+
+        // 화면에 렌더링
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            const stats = document.getElementById('stats');
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div class="empty-message">할 일을 추가해보세요!</div>';
+                stats.innerHTML = '';
+                return;
+            }
+
+            todoList.innerHTML = todos.map(todo => `
+                <div class="todo-item">
+                    <input 
+                        type="checkbox" 
+                        class="todo-checkbox" 
+                        ${todo.completed ? 'checked' : ''} 
+                        onchange="toggleTodo(${todo.id})"
+                    >
+                    <span class="todo-text ${todo.completed ? 'completed' : ''}">
+                        ${todo.text}
+                    </span>
+                    <button class="delete-btn" onclick="showDeleteModal(${todo.id})">
+                        <svg class="trash-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+
+            const completedCount = todos.filter(t => t.completed).length;
+            stats.innerHTML = `전체 ${todos.length}개 중 ${completedCount}개 완료`;
+        }
+
+        // Enter 키로 추가
+        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        // 페이지 로드 시 실행
+        loadTodos();
+    </script>
+</body>
+</html>
